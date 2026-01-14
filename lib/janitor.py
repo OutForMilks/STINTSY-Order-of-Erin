@@ -1,6 +1,7 @@
 import re
-import unicodedata
 import string
+import unicodedata
+
 
 def normalize(text: str) -> str:
     """
@@ -8,7 +9,7 @@ def normalize(text: str) -> str:
     equivalent (e.g., emojis and CJKs).
 
     Do not use this function alone, use `clean_and_tokenize()`.
-    
+
     # Parameters
     * text: String entry.
 
@@ -19,11 +20,11 @@ def normalize(text: str) -> str:
     normalize("¿Cómo estás?")
     $ 'como estas?'
 
-    normalize(" hahahaha HUY! Kamusta 😅 Mayaman $$$ ka na ba?") 
+    normalize(" hahahaha HUY! Kamusta 😅 Mayaman $$$ ka na ba?")
     $ ' hahahaha huy! kamusta  mayaman $$$ ka na ba?'
     """
-    normalized = unicodedata.normalize('NFKD', text)
-    ascii_text = normalized.encode('ascii', 'ignore').decode('ascii')
+    normalized = unicodedata.normalize("NFKD", text)
+    ascii_text = normalized.encode("ascii", "ignore").decode("ascii")
 
     return ascii_text.lower()
 
@@ -35,7 +36,7 @@ def rem_punctuation(text: str) -> str:
     (for more information, see the examples).
 
     Do not use this function alone, use `clean_and_tokenize()`.
-    
+
     # Parameters
     * text: String entry.
 
@@ -76,7 +77,7 @@ def collapse_whitespace(text: str) -> str:
     """
     This collapses whitespace. Here, collapsing means the transduction of all whitespace strings of any
     length to a whitespace string of unit length (e.g., "   " -> " "; formally " "+ -> " ").
-    
+
     Do not use this function alone, use `clean_and_tokenize()`.
 
     # Parameters
@@ -89,10 +90,10 @@ def collapse_whitespace(text: str) -> str:
     collapse_whitespace("  huh,  was.  that!!! ")
     $ 'huh, was. that!!!'
     """
-    return re.sub(f" +", " ", text).strip()
+    return re.sub(" +", " ", text).strip()
 
 
-def rem_stopwords(tokens: list[str], stopwords: set[str]) -> str:
+def rem_stopwords(tokens: list[str], stopwords: set[str]) -> list[str]:
     """
     This removes all stopwords. For fast look up, `stopwords` is a set with type str.
     This allows for constant time lookups as opposed to a linear search with a list.
@@ -102,9 +103,9 @@ def rem_stopwords(tokens: list[str], stopwords: set[str]) -> str:
     Do not use this function alone, use `clean_and_tokenize()`.
 
     # Parameters
-    * text: A tokenized string. 
+    * text: A tokenized string.
     * stopwords: stopword dictionary.
-    
+
     # Returns
     Text with the stopwords removed.
 
@@ -118,7 +119,7 @@ def rem_stopwords(tokens: list[str], stopwords: set[str]) -> str:
     filtered = [word for word in tokens if word not in stopwords]
     return filtered
 
-    
+
 def clean_and_tokenize(text: str, stopwords: set[str]) -> list[str]:
     """
     This is the main function for data cleaning (i.e., it calls all the cleaning functions in the prescribed order).
@@ -130,14 +131,14 @@ def clean_and_tokenize(text: str, stopwords: set[str]) -> list[str]:
     * stopwords: stopword dictionary.
 
     # Returns
-    Clean tokenized string. 
+    Clean tokenized string.
     """
     # cleaning on the base string
     text = normalize(text)
     text = rem_punctuation(text)
     text = rem_numbers(text)
     text = collapse_whitespace(text)
-    
+
     # tokenization is now trivial since the cleaning steps allow the tokenization to be a mere word boundary split
     toks = text.split()
 
@@ -147,29 +148,29 @@ def clean_and_tokenize(text: str, stopwords: set[str]) -> list[str]:
     return toks
 
 
-def find_spam_and_empty(tokens: list[str], min_length: int = 3) -> list[str]:
+def find_spam_and_empty(tokens: list[str], min_length: int = 3) -> list[str] | None:
     """
     Filter out empty token lists and unintelligible/spammy tokens.
-    
+
     Spammy tokens:
     - Tokens shorter than min_length
     - Tokens containing non-alphabetic characters
     - Tokens consisting of a repeated substring (e.g., 'aaaaaa', 'ababab', 'abcabcabc')
-    
+
     # Parameters
     * tokens: list of token strings
     * min_length: minimum length of token to keep
-    
+
     # Returns
         Cleaned list of tokens, or None if empty after filtering
     """
     cleaned = []
     for t in tokens:
-        if len(t) < min_length:  
+        if len(t) < min_length:
             continue
         if not t.isalpha():
             continue
-        if re.fullmatch(r'(.+?)\1+', t):
+        if re.fullmatch(r"(.+?)\1+", t):
             continue
         cleaned.append(t)
-    return cleaned
+    return cleaned if cleaned else None
