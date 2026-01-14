@@ -1,37 +1,35 @@
-def make_lut(word_list: [str]) -> None:
+def make_lut(word_list: list[str]) -> None:
     """
-    This takes in a list of strings, constructs a dictionary-based
-    look up table and is written to a new Python file with the name
-    `stopwords_lut.py`.
+    Takes a list of strings and writes a Python file `stopwords_set.py`
+    containing a set of the words for fast membership testing.
 
-    The output file would look something like:
+    The output file would look like:
     ```
-    stopwords_lut = {
-        "word_a": True,
-        "word_b": True,
-        "word_c": True,
-        "word_d": True,
+    stopwords_set = {
+        "word_a",
+        "word_b",
+        "word_c",
+        "word_d",
     }
     ```
 
     # Params
-    * word_list: the list of words to be used to construct the lut.
+    * word_list: list of words to include in the set.
 
     # Returns
     None
 
     # Side Effects
-    Creates a new file at the same directory with the name 
-    `stopwords_lut.py`.
+    Creates a new file `stopwords_set.py` in the current directory.
     """
+    # Remove single quotes in words to avoid syntax issues
     word_list = [word.replace("'", "") for word in word_list]
-    word_dict = {word: True for word in word_list}
 
-    with open("stopwords_lut.py", "w") as f:
-        f.write("stopwords_lut = {\n")
-        for key, val in word_dict.items():
-            f.write(f"\t'{key}': {val},\n")
-        f.write("}")
+    with open("stopwords_set.py", "w") as f:
+        f.write("stopwords_set = {\n")
+        for word in word_list:
+            f.write(f"\t'{word}',\n")
+        f.write("}\n")
 
 
 stopwords_list = [
