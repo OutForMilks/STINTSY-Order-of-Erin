@@ -28,14 +28,16 @@ class BagOfWordsModel:
         Can be a type of int (i.e., the token must appear min_freq number of times in the document)
         or a float (i.e, token must be in min_freq% of the documents)
         """
-        vectorizer = (
-            CountVectorizer(min_df=min_freq)
-            if min_freq is not None
-            else CountVectorizer()
+        vectorizer = CountVectorizer(
+            min_df=min_freq if min_freq is not None else 1,
+            tokenizer=str.split,  # Use str.split instead of lambda
+            preprocessor=lambda x: x,  # No preprocessing
+            lowercase=False,  # Don't lowercase
         )
         self.matrix = vectorizer.fit_transform(texts)
         self.feature_names = vectorizer.get_feature_names_out()
         self.vectorizer = vectorizer
+        self.sparcity = self.matrix.nnz / (self.matrix.shape[0] * self.matrix.shape[1])
 
     def transform_sentence(self, sentence: str):
         """
