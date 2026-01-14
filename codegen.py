@@ -1,7 +1,9 @@
-def make_lut(word_list: list[str]) -> None:
+from typing import TextIO
+
+def make_lut(word_list: list[str], artifact: TextIO) -> None:
     """
-    Takes a list of strings and writes a Python file `stopwords_set.py`
-    containing a set of the words for fast membership testing.
+    Takes a list of strings and the artifact file and writes the
+    lookup table in that file.
 
     The output file would look like:
     ```
@@ -15,21 +17,22 @@ def make_lut(word_list: list[str]) -> None:
 
     # Params
     * word_list: list of words to include in the set.
+    * artifact: the artifact file
 
     # Returns
     None
 
     # Side Effects
-    Creates a new file `stopwords_set.py` in the current directory.
+    Populates the artifact file with the lookup table.
     """
-    # Remove single quotes in words to avoid syntax issues
+    # Since the data cleaning stage removed punctuation marks
+    # also remove punctuation marks here
     word_list = [word.replace("'", "") for word in word_list]
 
-    with open("stopwords_set.py", "w") as f:
-        f.write("stopwords_set = {\n")
-        for word in word_list:
-            f.write(f"\t'{word}',\n")
-        f.write("}\n")
+    artifact.write("stopwords_set = {\n")
+    for word in word_list:
+        artifact.write(f"\t\"{word}\",\n")
+    artifact.write("}\n")
 
 
 stopwords_list = [
@@ -1197,4 +1200,12 @@ stopwords_list = [
 
 
 if __name__ == "__main__":
-    make_lut(stopwords_list)
+    with open("boilerplate.py", "w") as artifact:
+        artifact.write("\"\"\"\n")
+        artifact.write("This file is made by the code generator `codegen.py`\n\n")
+        artifact.write("# How To Use\n")
+        artifact.write("Add This in the `notebook/` directory\m")
+        artifact.write("Then, import as `from artifact import *`\n")
+        artifact.write("\"\"\"\n\n\n")
+
+        make_lut(stopwords_list, artifact)
