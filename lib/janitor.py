@@ -93,7 +93,7 @@ def collapse_whitespace(text: str) -> str:
     return re.sub(" +", " ", text).strip()
 
 
-def rem_stopwords(tokens: list[str], stopwords: set[str]) -> list[str]:
+def rem_stopwords(text: str, stopwords: set[str]) -> str:
     """
     This removes all stopwords. For fast look up, `stopwords` is a set with type str.
     This allows for constant time lookups as opposed to a linear search with a list.
@@ -103,7 +103,7 @@ def rem_stopwords(tokens: list[str], stopwords: set[str]) -> list[str]:
     Do not use this function alone, use `clean_and_tokenize()`.
 
     # Parameters
-    * text: A tokenized string.
+    * text: A string.
     * stopwords: stopword dictionary.
 
     # Returns
@@ -116,11 +116,12 @@ def rem_stopwords(tokens: list[str], stopwords: set[str]) -> list[str]:
     # Future
     If this function is too slow, we may implement `stopwords` as an 26-ary trie to achieve log-linear time.
     """
-    filtered = [word for word in tokens if word not in stopwords]
-    return filtered
+    filtered = [word for word in text.split(" ") if word not in stopwords]
+
+    return " ".join(filtered)
 
 
-def clean_and_tokenize(text: str, stopwords: set[str]) -> list[str]:
+def clean(text: str, stopwords: set[str]) -> str:
     """
     This is the main function for data cleaning (i.e., it calls all the cleaning functions in the prescribed order).
 
@@ -131,46 +132,49 @@ def clean_and_tokenize(text: str, stopwords: set[str]) -> list[str]:
     * stopwords: stopword dictionary.
 
     # Returns
-    Clean tokenized string.
+    Clean string
     """
     # cleaning on the base string
     text = normalize(text)
     text = rem_punctuation(text)
     text = rem_numbers(text)
     text = collapse_whitespace(text)
+    text = rem_stopwords(text, stopwords)
 
-    # tokenization is now trivial since the cleaning steps allow the tokenization to be a mere word boundary split
-    toks = text.split()
-
-    # cleaning on the tokenized string
-    toks = rem_stopwords(toks, stopwords)
-
-    return toks
+    return text
 
 
-def find_spam_and_empty(tokens: list[str], min_length: int = 3) -> list[str] | None:
+def find_spam_and_empty(text: str, min_length: int = 3) -> str | None:
     """
-    Filter out empty token lists and unintelligible/spammy tokens.
+    Filter out empty text and unintelligible/spammy unintelligible substrings in the text.
 
-    Spammy tokens:
-    - Tokens shorter than min_length
-    - Tokens containing non-alphabetic characters
-    - Tokens consisting of a repeated substring (e.g., 'aaaaaa', 'ababab', 'abcabcabc')
+    Spammy substrings:
+    - Shorter than min_length
+    - Containing non-alphabetic characters
+    - Consisting of a repeated substring (e.g., 'aaaaaa', 'ababab', 'abcabcabc')
 
     # Parameters
-    * tokens: list of token strings
-    * min_length: minimum length of token to keep
+    * text: input string.
+    * min_length: minimum length of word to keep.
 
     # Returns
-        Cleaned list of tokens, or None if empty after filtering
+        Cleaned string, or None if empty after filtering.
     """
-    cleaned = []
-    for t in tokens:
+    cleaned_tokens = []
+    for t in text.split():
         if len(t) < min_length:
             continue
-        if not t.isalpha():
+
+        if re.search(r"(.)\1{2,}", t):
             continue
-        if re.fullmatch(r"(.+?)\1+", t):
+
+        min_diversity = 0.3 + (0.1 * min(len(t), 10) / 10)
+        if len(set(t)) / len(t) < min_diversity:
             continue
-        cleaned.append(t)
-    return cleaned if cleaned else None
+
+        if re.match(r"^(.+)\1+", t):
+            continue
+
+        cleaned_tokens.append(t)
+
+    return " ".join(cleaned_tokens) if cleaned_tokens else None
