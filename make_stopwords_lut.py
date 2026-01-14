@@ -1,15 +1,38 @@
-"""
-This script generates a lookup table of the stop words from NTLK
-and Wolfram Mathematica's list of stopwords.
+def make_lut(word_list: [str]) -> None:
+    """
+    This takes in a list of strings, constructs a dictionary-based
+    look up table and is written to a new Python file with the name
+    `stopwords_lut.py`.
 
-# To Run
-Simply run
-`python3 make_stopwords_lut.py`
+    The output file would look something like:
+    ```
+    stopwords_lut = {
+        "word_a": True,
+        "word_b": True,
+        "word_c": True,
+        "word_d": True,
+    }
+    ```
 
-# Results
-This makes a new Python file, `stopwords_lut.py` with the stopwords
-as a dictionary-based lut.
-"""
+    # Params
+    * word_list: the list of words to be used to construct the lut.
+
+    # Returns
+    None
+
+    # Side Effects
+    Creates a new file at the same directory with the name 
+    `stopwords_lut.py`.
+    """
+    word_list = [word.replace("'", "") for word in word_list]
+    word_dict = {word: True for word in word_list}
+
+    with open("stopwords_lut.py", "w") as f:
+        f.write("stopwords_lut = {\n")
+        for key, val in word_dict.items():
+            f.write(f"\t'{key}': {val},\n")
+        f.write("}")
+
 
 stopwords_list = [
     "0o",
@@ -1173,11 +1196,7 @@ stopwords_list = [
     "zi",
     "zz",
 ]
-stopwords_list = [word.replace("'", "") for word in stopwords_list]
-stopwords_dict = {word: True for word in stopwords_list}
 
-with open("stopwords_lut.py", "w") as f:
-    f.write("{")
-    for key, val in stopwords_dict.items():
-        f.write(f"'{key}': {val},\n")
-    f.write("}")
+
+if __name__ == "__main__":
+    make_lut(stopwords_list)
