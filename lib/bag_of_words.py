@@ -1,4 +1,4 @@
-from typing import Iterable, Union
+from typing import Iterable
 
 from sklearn.feature_extraction.text import CountVectorizer
 
