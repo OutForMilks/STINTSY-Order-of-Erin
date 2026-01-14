@@ -15,12 +15,13 @@
 1. Simply clone the repository.
 2. Run `uv sync` which should catch your environment up.
 3. If your text editor does not support JupyterNotebooks run browser-based interface with `uv run --with jupyter jupyter lab`. No need to do this if you're using PyCharm or VSCode.
+4. Run `uv run scripts/codegen.py` and place the result in the `notebooks/` directory, this script generates some prerequisites the Jupyter notebooks require.
 
 ## Machine Learning Models
 
-We will train two classical supervised learning algorithms: **Naive Baye's** and **Support Vector Machine (SVM)**. Then, one neural network approach: 🏗️.
+We will use two classical supervised learning algorithms: **Naive Baye** and 🏗️. Then, one neural network approach: 🏗️.
 
-> @Stephen: add the neural network approach here.
+> @Stephen: add the classical supervised learning algorithm and neural network approach here.
 
 ## Notebooks
 
