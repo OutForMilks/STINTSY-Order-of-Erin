@@ -17,7 +17,7 @@ class BagOfWordsModel:
     ```
     """
 
-    def __init__(self, texts: Iterable[str], min_freq: Union[int, float]):
+    def __init__(self, texts: Iterable[str], min_freq: int | float | None = None):
         """
         Initialize the BagOfWordsModel by fitting the vectorizer to the text corpus. This also filters out tokens
         that do not appear more than five times in the dataset.
@@ -28,7 +28,11 @@ class BagOfWordsModel:
         Can be a type of int (i.e., the token must appear min_freq number of times in the document)
         or a float (i.e, token must be in min_freq% of the documents)
         """
-        vectorizer = CountVectorizer(min_df=min_freq)
+        vectorizer = (
+            CountVectorizer(min_df=min_freq)
+            if min_freq is not None
+            else CountVectorizer()
+        )
         self.matrix = vectorizer.fit_transform(texts)
         self.feature_names = vectorizer.get_feature_names_out()
         self.vectorizer = vectorizer
