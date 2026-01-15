@@ -100,7 +100,7 @@ def rem_stopwords(text: str, stopwords: set[str]) -> str:
 
     Strings detected as stopwords is replaced with the empty string "".
 
-    Do not use this function alone, use `clean_and_tokenize()`.
+    This assumes `text` is already lematized.
 
     # Parameters
     * text: A string.
@@ -121,7 +121,7 @@ def rem_stopwords(text: str, stopwords: set[str]) -> str:
     return " ".join(filtered)
 
 
-def clean(text: str, stopwords: set[str]) -> str:
+def clean(text: str) -> str:
     """
     This is the main function for data cleaning (i.e., it calls all the cleaning functions in the prescribed order).
 
@@ -139,7 +139,6 @@ def clean(text: str, stopwords: set[str]) -> str:
     text = rem_punctuation(text)
     text = rem_numbers(text)
     text = collapse_whitespace(text)
-    text = rem_stopwords(text, stopwords)
 
     return text
 
