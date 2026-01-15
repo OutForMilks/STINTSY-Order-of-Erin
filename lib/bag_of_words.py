@@ -22,6 +22,11 @@ class BagOfWordsModel:
         Initialize the BagOfWordsModel by fitting the vectorizer to the text corpus. This also filters out tokens
         that do not appear more than five times in the dataset.
 
+        This sets its tokenizer to the word boundary tokenizer since the input, at this point, **should** be
+        cleaned and processed text.
+
+        This also uses both unigrams and bigrams, hence, at the worst case its space complexity is O(n^2).
+
         # Parameters
         * texts: An iterable of cleaned text documents.
         * min_freq: Determines the document frequency of a token for it to appear in the model.
@@ -30,14 +35,14 @@ class BagOfWordsModel:
         """
         vectorizer = CountVectorizer(
             min_df=min_freq if min_freq is not None else 1,
-            tokenizer=str.split,  # Use str.split instead of lambda
-            preprocessor=lambda x: x,  # No preprocessing
-            lowercase=False,  # Don't lowercase
+            tokenizer=str.split,    # Use str.split instead of lambda
+            lowercase=False,        # Don't lowercase
+            ngram_range=(1,2),      # Unigrams and bigrams
         )
         self.matrix = vectorizer.fit_transform(texts)
         self.feature_names = vectorizer.get_feature_names_out()
         self.vectorizer = vectorizer
-        self.sparcity = self.matrix.nnz / (self.matrix.shape[0] * self.matrix.shape[1])
+        self.sparsity = self.matrix.nnz / (self.matrix.shape[0] * self.matrix.shape[1])
 
     def transform_sentence(self, sentence: str):
         """
