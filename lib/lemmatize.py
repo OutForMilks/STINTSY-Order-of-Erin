@@ -1,22 +1,20 @@
-import pandas as pd
 from nltk.stem import WordNetLemmatizer
 
-lemmatizer = WordNetLemmatizer()
+wn_lemmatizer = WordNetLemmatizer()
 
 
-def lemmatize_toks(text: str) -> pd.Series:
+def lemmatizer(text: str) -> str:
     """
-    Lemmatize a string of space-separated tokens and return a Series containing
-    the lemmatized string.
+    Lemmatize a string of space-separated tokens and return the lemmatized string.
 
     # Parameters
     * text: A string of space-separated tokens.
 
     # Returns
-    A pd.Series containing a single string with lemmatized tokens.
+    A string with lemmatized tokens.
     """
     tokens = text.split() if text else []
-    lemmatized = [lemmatizer.lemmatize(t) for t in tokens]
+    lemmatized = [wn_lemmatizer.lemmatize(t) for t in tokens]
     lemmatized_str = " ".join(lemmatized)
 
-    return pd.Series([lemmatized_str])
+    return lemmatized_str
