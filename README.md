@@ -22,6 +22,9 @@
 We will use two classical supervised learning algorithms: **Naive Baye** and 🏗️. Then, one neural network approach: 🏗️.
 
 > @Stephen: add the classical supervised learning algorithm and neural network approach here.
+> When you add the algorithm update: 
+> - the ## Notebooks section in this file
+> - the filename of `notebooks/svm.ipynb`
 
 ## Notebooks
 
