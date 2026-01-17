@@ -177,3 +177,50 @@ def find_spam_and_empty(text: str, min_length: int = 3) -> str | None:
         cleaned_tokens.append(t)
 
     return " ".join(cleaned_tokens) if cleaned_tokens else None
+
+
+def is_spam_token(t: str, min_length: int = 3) -> bool:
+    """
+    Check if a single token (word) is considered spammy/unintelligible.
+
+    Spammy substrings:
+    - Shorter than min_length
+    - Containing non-alphabetic characters
+    - Consisting of a repeated substring (e.g., 'aaaaaa', 'ababab', 'abcabcabc')
+
+    # Parameters:
+    * t (str): The token to check.
+    * min_length (int): Minimum length for a token to be considered valid.
+
+    Returns:
+        bool: True if the token is spammy, False otherwise.
+    """
+
+    if len(t) < min_length:
+        return True
+
+    if re.search(r"(.)\1{2,}", t):
+        return True
+
+    min_diversity = 0.3 + (0.1 * min(len(t), 10) / 10)
+    if len(set(t)) / len(t) < min_diversity:
+        return True
+
+    if re.match(r"^(.+)\1+", t):
+        return True
+
+    return False
+
+
+def spam_affected(text: str) -> bool:
+    """
+    Check if a text contains at least one spammy token.
+
+    Parameters:
+    * text (str): Input text to check.
+
+    Returns:
+        bool: True if any token in text is spammy, False otherwise.
+    """
+    tokens = text.split()
+    return any(is_spam_token(t) for t in tokens)
