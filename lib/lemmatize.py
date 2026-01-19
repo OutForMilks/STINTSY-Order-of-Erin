@@ -1,12 +1,9 @@
-import nltk
+import spacy
 
-
-nltk.download("wordnet")
-nltk.download("omw-1.4")
-
-from nltk.stem import WordNetLemmatizer
-
-wn_lemmatizer = WordNetLemmatizer()
+# STATE REQUIREMENT // SIDE-EFFECT
+# Requires:
+#   uv pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+nlp = spacy.load("en_core_web_sm")
 
 
 def lemmatizer(text: str) -> str:
@@ -19,8 +16,11 @@ def lemmatizer(text: str) -> str:
     # Returns
     A string with lemmatized tokens.
     """
-    tokens = text.split() if text else []
-    lemmatized = [wn_lemmatizer.lemmatize(t) for t in tokens]
-    lemmatized_str = " ".join(lemmatized)
 
-    return lemmatized_str
+    if not text:
+        return ""
+    doc = nlp(text)
+
+    return " ".join(
+        token.lemma_ for token in doc if not token.is_space and not token.is_punct
+    )

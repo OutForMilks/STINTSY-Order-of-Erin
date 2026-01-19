@@ -6,12 +6,14 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "docutils>=0.22.4",
+    "en-core-web-sm",
     "ipykernel>=7.1.0",
     "matplotlib>=3.10.8",
-    "nltk>=3.9.2",
     "pandas>=2.3.3",
     "scikit-learn>=1.8.0",
+    "spacy>=3.8.11",
     "torch>=2.9.1",
+    "tqdm>=4.67.1",
     "wordcloud>=1.9.5",
 ]
 
@@ -19,3 +21,6 @@ dependencies = [
 dev = [
     "black>=25.12.0",
 ]
+
+[tool.uv.sources]
+en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
