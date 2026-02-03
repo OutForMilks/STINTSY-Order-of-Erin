@@ -27,6 +27,19 @@ simple values.
 
 **Remarks**. The loss function was on epoch 46, with a value of 0.0105.
 
+## Experiment 1: 4 Hidden Layers
+**Hyperparameters**
+| Hyperparameter     | Value |
+| ---                | ---   |
+| `N_EPOCHS`         | 10    |
+| `N_HIDDENS`        | 4     |
+| `N_SNEAKY_NEURONS` | 128   |  
+
+**Evaluation Metrics**
+- $\text{correct}/\text{total} = 0.8091$ 
+
+**Remarks**. None. Very slight higher accuracy than previous, Experiment 1.
+
 <!-- 
     ( ============================ )
     ( EXPERIMENT FORMAT ---------- )
