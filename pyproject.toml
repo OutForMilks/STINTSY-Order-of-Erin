@@ -19,6 +19,7 @@ dependencies = [
     "tqdm>=4.67.1",
     "wordcloud>=1.9.5",
     "imbalanced-learn<=0.41.1",
+    "scipy>=1.17.0",
 ]
 
 [dependency-groups]
