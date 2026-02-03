@@ -14,6 +14,19 @@
 **Remarks**. None. This is the preliminary test using relatively
 simple values.
 
+## Experiment 1: 50 Epochs
+**Hyperparameters**
+| Hyperparameter     | Value |
+| ---                | ---   |
+| `N_EPOCHS`         | 50    |
+| `N_HIDDENS`        | 2     |
+| `N_SNEAKY_NEURONS` | 128   |  
+
+**Evaluation Metrics**
+- $\text{correct}/\text{total} = 0.8083$ 
+
+**Remarks**. The loss function was on epoch 46, with a value of 0.0105.
+
 <!-- 
     ( ============================ )
     ( EXPERIMENT FORMAT ---------- )
