@@ -12,16 +12,4 @@ def evaluate_classifier(model, y_pred, y_test, labels=None, show_cm=True, digits
     print("\nClassification Report:\n")
     print(classification_report(y_test, y_pred, labels=labels, digits=digits))
 
-    if show_cm:
-        cm = confusion_matrix(y_test, y_pred, labels=labels)
-
-        cm_df = pd.DataFrame(
-            cm,
-            index=[f"True_{l}" for l in (labels if labels else sorted(set(y_test)))],
-            columns=[f"Pred_{l}" for l in (labels if labels else sorted(set(y_test)))],
-        )
-
-        print("\nConfusion Matrix:\n")
-        print(cm_df)
-
     return y_pred
