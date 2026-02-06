@@ -81,3 +81,67 @@ def check_feature_sparsity(X_train, X_test, bow, top_n=30):
     )
 
     return summary_df, df_unseen
+
+
+def high_lift_words(
+    y_pred,
+    X_test,
+    y_test,
+    bow,
+    label,
+    lift_threshold=2.0,
+    pct_wrong_threshold=0,
+    top_n=30,
+    min_docs=5,
+):
+    """
+    Returns words that are unusually common in wrong predictions for a given label.
+    """
+
+    feature_names = bow.vectorizer.get_feature_names_out()
+
+    # Wrongly predicted as the label
+    mask_wrong = (y_pred == label) & (y_test != label).to_numpy()
+    X_wrong = X_test[mask_wrong]
+    n_wrong = X_wrong.shape[0]
+    if n_wrong == 0:
+        return pd.DataFrame(columns=["word", "pct_wrong", "lift"])
+
+    # All other docs
+    mask_other = ~mask_wrong
+    X_other = X_test[mask_other]
+    n_other = X_other.shape[0]
+
+    # Document frequencies
+    df_wrong = (X_wrong > 0).sum(axis=0).A1
+    df_other = (X_other > 0).sum(axis=0).A1
+
+    pct_wrong = df_wrong / n_wrong * 100
+    pct_other = df_other / n_other * 100
+
+    lift = (pct_wrong + 1e-8) / (
+        pct_other + 1e-8
+    )  # Add small value to avoid division by zero
+
+    df = pd.DataFrame(
+        {
+            "word": feature_names,
+            "pct_wrong": pct_wrong,
+            "lift": lift,
+            "wrong_docs": df_wrong.astype(int),
+        }
+    )
+
+    # Filter for words with lift above threshold and minimum occurrence
+    df = df[
+        (df["lift"] >= lift_threshold)
+        & (df["wrong_docs"] >= min_docs)
+        & (df["pct_wrong"] >= pct_wrong_threshold)
+    ]
+
+    # Sort by lift descending
+    df = df.sort_values("lift", ascending=False).head(top_n)
+
+    df["lift"] = df["lift"].round(2)
+
+    return df[["word", "pct_wrong", "lift"]]
