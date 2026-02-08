@@ -5,7 +5,23 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 
 def evaluate_classifier(model, y_pred, y_test, labels=None, show_cm=True, digits=4):
     """
-    Better evaluation wrapper for classifiers.
+    Prints standard evaluation metrics for a classifier.
+
+    Metrics printed:
+    - Accuracy
+    - Precision / Recall / F1-score per class
+    - Macro / Weighted averages
+
+    # Parameters
+    * model: trained model object (kept for consistency, not used directly here).
+    * y_pred: predicted labels.
+    * y_test: true labels.
+    * labels: optional list controlling class order in report.
+    * show_cm: if True, also prints the confusion matrix.
+    * digits: number of decimal places for the classification report.
+
+    # Returns
+        y_pred (for convenience in notebooks).
     """
 
     print("Accuracy:", accuracy_score(y_test, y_pred))
@@ -17,8 +33,20 @@ def evaluate_classifier(model, y_pred, y_test, labels=None, show_cm=True, digits
 
 def check_feature_sparsity(X_train, X_test, bow, top_n=30):
     """
-    Checks which BoW features/words appear in X_test but never in X_train.
-    Returns a readable summary and a top table of unseen words in test.
+    Checks which BoW features appear in X_test but never appear in X_train.
+
+    Output tables:
+    - summary_df: high-level statistics (counts and percentages)
+    - df_unseen: top unseen words with frequency in the test set
+
+    # Parameters
+    * X_train: sparse BoW matrix for training data.
+    * X_test: sparse BoW matrix for test data.
+    * bow: fitted BoW object containing the vectorizer.
+    * top_n: number of top unseen words to return.
+
+    # Returns
+        summary_df, df_unseen
     """
 
     # Print like this
@@ -95,7 +123,30 @@ def high_lift_words(
     min_docs=5,
 ):
     """
-    Returns words that are unusually common in wrong predictions for a given label.
+    Finds words that are unusually common in WRONG predictions for a given label.
+
+    Wrong predictions here mean:
+    - predicted == label
+    - actual != label
+
+    Computation:
+    - pct_wrong = % of wrong docs containing the word
+    - pct_other = % of other docs containing the word
+    - lift = pct_wrong / pct_other
+
+    # Parameters
+    * y_pred: predicted labels.
+    * X_test: sparse BoW test matrix.
+    * y_test: true labels.
+    * bow: fitted BoW object containing the vectorizer.
+    * label: the predicted label we are analyzing.
+    * lift_threshold: minimum lift value to keep.
+    * pct_wrong_threshold: minimum pct_wrong value to keep.
+    * top_n: number of top words to return.
+    * min_docs: minimum number of wrong docs the word must appear in.
+
+    # Returns
+        DataFrame with columns: word, pct_wrong, lift
     """
 
     feature_names = bow.vectorizer.get_feature_names_out()
@@ -145,3 +196,89 @@ def high_lift_words(
     df["lift"] = df["lift"].round(2)
 
     return df[["word", "pct_wrong", "lift"]]
+
+
+def compare_word_usage_wrong_vs_right(y_pred, X_test, y_test, bow, label, top_n=20):
+    """
+    Returns the top words associated with wrong vs right predictions
+    for a specific predicted label.
+
+    This compares:
+    - WRONG predictions: predicted == label but actual != label
+    - RIGHT predictions: predicted == label and actual == label
+
+    Percentages:
+    - wrong_word_pct = % share of the word among all word occurrences in wrong docs
+    - right_word_pct = % share of the word among all word occurrences in right docs
+
+    # Parameters
+    * y_pred: predicted labels.
+    * X_test: sparse BoW test matrix.
+    * y_test: true labels.
+    * bow: fitted BoW object containing the vectorizer.
+    * label: predicted label to analyze.
+    * top_n: number of top words to return.
+
+    # Returns
+        DataFrame with columns:
+        word | wrong_label_rank | wrong_word_pct | right_label_rank | right_word_pct
+    """
+
+    wrong_mask = (y_pred == label) & (y_test != label).to_numpy()
+    right_mask = (y_pred == label) & (y_test == label).to_numpy()
+
+    X_wrong_pred = X_test[wrong_mask]
+    X_right_pred = X_test[right_mask]
+
+    wrong_counts = X_wrong_pred.sum(axis=0).A1  # convert sparse to 1D array
+    right_counts = X_right_pred.sum(axis=0).A1
+
+    feature_names = bow.vectorizer.get_feature_names_out()
+
+    # Totals (for %)
+    wrong_total = wrong_counts.sum()
+    right_total = right_counts.sum()
+
+    # Avoid division by zero
+    wrong_pct = (
+        wrong_counts / wrong_total if wrong_total > 0 else np.zeros_like(wrong_counts)
+    )
+    right_pct = (
+        right_counts / right_total if right_total > 0 else np.zeros_like(right_counts)
+    )
+
+    df = pd.DataFrame(
+        {
+            "word": feature_names,
+            "wrong_count": wrong_counts,
+            "wrong_word_pct": wrong_pct,
+            "right_count": right_counts,
+            "right_word_pct": right_pct,
+        }
+    )
+
+    df["wrong_label_rank"] = (
+        df["wrong_count"].rank(method="dense", ascending=False).astype(int)
+    )
+    df["right_label_rank"] = (
+        df["right_count"].rank(method="dense", ascending=False).astype(int)
+    )
+
+    df = df.sort_values("wrong_count", ascending=False)
+
+    # Final output columns (exactly what you asked)
+    df_out = df[
+        [
+            "word",
+            "wrong_label_rank",
+            "wrong_word_pct",
+            "right_label_rank",
+            "right_word_pct",
+        ]
+    ].head(top_n)
+
+    # Make % readable (optional)
+    df_out["wrong_word_pct"] = (df_out["wrong_word_pct"] * 100).round(3)
+    df_out["right_word_pct"] = (df_out["right_word_pct"] * 100).round(3)
+
+    return df_out.head(top_n)
