@@ -3,7 +3,9 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
 
-def evaluate_classifier(model, y_pred, y_test, labels=None, show_cm=True, digits=4):
+def report_classification_performance(
+    model, y_pred, y_test, labels=None, show_cm=True, digits=4
+):
     """
     Prints standard evaluation metrics for a classifier.
 
@@ -31,7 +33,7 @@ def evaluate_classifier(model, y_pred, y_test, labels=None, show_cm=True, digits
     return y_pred
 
 
-def check_feature_sparsity(X_train, X_test, bow, top_n=30):
+def report_unseen_test_words(X_train, X_test, bow, top_n=30):
     """
     Checks which BoW features appear in X_test but never appear in X_train.
 
@@ -111,7 +113,7 @@ def check_feature_sparsity(X_train, X_test, bow, top_n=30):
     return summary_df, df_unseen
 
 
-def high_lift_words(
+def report_misleading_words_by_lift(
     y_pred,
     X_test,
     y_test,
