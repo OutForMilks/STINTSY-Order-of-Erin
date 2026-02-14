@@ -301,12 +301,12 @@ def comparative_confusion_matrix(cm1, cm2):
     # confusion matrix - before
     disp1 = ConfusionMatrixDisplay(cm1, display_labels=[-1, 0, 1])
     disp1.plot(ax=axes[0], cmap='Blues', colorbar=False)
-    axes[0].set_title('Before Tuning')
+    axes[0].set_title('Before')
     
     # confusion matrix - after
     disp2 = ConfusionMatrixDisplay(cm2, display_labels=[-1, 0, 1])
     disp2.plot(ax=axes[1], cmap='Blues', colorbar=False)
-    axes[1].set_title('After Tuning')
+    axes[1].set_title('After')
     
     # difference matrix
     im = axes[2].imshow(cm_diff, cmap='RdYlGn')
