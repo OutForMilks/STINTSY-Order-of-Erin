@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
 
 
 def report_classification_performance(
@@ -284,3 +285,76 @@ def compare_word_usage_wrong_vs_right(y_pred, X_test, y_test, bow, label, top_n=
     df_out["right_word_pct"] = (df_out["right_word_pct"] * 100).round(3)
 
     return df_out.head(top_n)
+
+def comparative_confusion_matrix(cm1, cm2):
+    """
+    Returns a comparative figure of confusion matrix 1 and confusion matrix 2 
+    with the differences between the 2
+
+    # Parameters 
+    cm1 - confusion matrix 1 or the initial/old confusion matrix
+    cm2 - confusion matrix 2 or the new confusion matrix to be compared against cm1
+    """
+    cm_diff = cm2 - cm1 
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+
+    # confusion matrix - before
+    disp1 = ConfusionMatrixDisplay(cm1, display_labels=[-1, 0, 1])
+    disp1.plot(ax=axes[0], cmap='Blues', colorbar=False)
+    axes[0].set_title('Before Tuning')
+    
+    # confusion matrix - after
+    disp2 = ConfusionMatrixDisplay(cm2, display_labels=[-1, 0, 1])
+    disp2.plot(ax=axes[1], cmap='Blues', colorbar=False)
+    axes[1].set_title('After Tuning')
+    
+    # difference matrix
+    im = axes[2].imshow(cm_diff, cmap='RdYlGn')
+    
+    for i in range(cm_diff.shape[0]):
+        for j in range(cm_diff.shape[1]):
+            value = cm_diff[i, j]
+            label = f'+{value}' if value > 0 else str(value)
+            color = 'black'
+            axes[2].text(j, i, label, ha='center', va='center', color=color)
+    
+    axes[2].set_xticks([0, 1, 2])
+    axes[2].set_yticks([0, 1, 2])
+    axes[2].set_xticklabels([-1, 0, 1])
+    axes[2].set_yticklabels([-1, 0, 1])
+    axes[2].set_xlabel('Predicted Label')
+    axes[2].set_ylabel('True Label')
+    axes[2].set_title('Difference')
+    
+    display(fig)
+    plt.close(fig)
+
+    # summarizing changes
+    print("Summary of Changes:")
+    print(f"Before - Total True Positive: {np.trace(cm1)} / {cm1.sum()}")
+    print(f"After  - Total True Positive: {np.trace(cm2)} / {cm2.sum()}")
+    print(f"Improvement: {np.trace(cm2) - np.trace(cm1):+d} correct predictions")
+    
+    labels = [-1, 0, 1]
+    print("\nPer-class diagonal change (correct predictions):")
+    for i, label in enumerate(labels):
+        change = cm_diff[i, i]
+        print(f"  Class {label:2d}: {change:+d}")
+
+def incorrect_confidence_score(model, X, y_true, y_pred):
+    y_prob = model.predict_proba(X)
+    confidence = y_prob.max(axis=1)
+    
+    incorrect_mask = y_pred != y_true.values
+    incorrect_confidence = confidence[incorrect_mask]
+    
+    plt.figure(figsize=(10, 6))
+    plt.hist(incorrect_confidence, bins=50, alpha=0.7, edgecolor='black')
+    plt.xlabel('Confidence Score')
+    plt.ylabel('Number of Samples')
+    plt.title('Distribution of Incorrect Predictions and Level of confidence')
+    plt.tight_layout()
+    plt.show()
+    
+    print(f"Total incorrect predictions: {incorrect_mask.sum()}/{len(y_pred)}")
+    print(f"Mean (incorrect) confidence score: {(incorrect_confidence).mean():.4f}")
