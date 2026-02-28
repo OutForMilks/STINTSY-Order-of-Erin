@@ -15,7 +15,7 @@ def grid_search(
     vocab_size,
     device,
     k_fold=5,
-    save_path="best_model.pt",
+    save_path="nn_models/best_model.pt",
 ):
     """
     Run grid search over hyperparameter combinations using stratified k-fold cross-validation.
