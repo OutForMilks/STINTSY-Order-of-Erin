@@ -6,10 +6,59 @@ import torch.nn as nn
 import pandas as pd
 from pandas import Series
 from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import f1_score, precision_score, recall_score, confusion_matrix
 import numpy as np
 from numpy import ndarray
 from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
+from dataclasses import dataclass, field
+
+
+@dataclass
+class FoldMetrics:
+    accuracy: float = 0.0
+    f1_macro: float = 0.0
+    f1_weighted: float = 0.0
+    precision_macro: float = 0.0
+    recall_macro: float = 0.0
+    confusion_matrix: ndarray = field(default_factory=lambda: np.array([]))
+
+
+@dataclass
+class CVMetrics:
+    train: list[FoldMetrics] = field(default_factory=list)
+    val: list[FoldMetrics] = field(default_factory=list)
+
+    def summary(self) -> pd.DataFrame:
+        """Return a DataFrame summarising mean ± std across folds for val metrics."""
+        rows = []
+        for split_name, folds in [("train", self.train), ("val", self.val)]:
+            for metric in ["accuracy", "f1_macro", "f1_weighted", "precision_macro", "recall_macro"]:
+                values = [getattr(f, metric) for f in folds]
+                rows.append({
+                    "split": split_name,
+                    "metric": metric,
+                    "mean": np.mean(values),
+                    "std": np.std(values),
+                    "min": np.min(values),
+                    "max": np.max(values),
+                })
+        return pd.DataFrame(rows).set_index(["split", "metric"])
+
+
+def _compute_metrics(all_labels: list[int], all_preds: list[int]) -> FoldMetrics:
+    """Compute all classification metrics from collected labels and predictions."""
+    labels_arr = np.array(all_labels)
+    preds_arr = np.array(all_preds)
+    accuracy = (preds_arr == labels_arr).mean().item()
+    return FoldMetrics(
+        accuracy=accuracy,
+        f1_macro=f1_score(labels_arr, preds_arr, average="macro", zero_division=0),
+        f1_weighted=f1_score(labels_arr, preds_arr, average="weighted", zero_division=0),
+        precision_macro=precision_score(labels_arr, preds_arr, average="macro", zero_division=0),
+        recall_macro=recall_score(labels_arr, preds_arr, average="macro", zero_division=0),
+        confusion_matrix=confusion_matrix(labels_arr, preds_arr),
+    )
 
 
 def train(
@@ -19,7 +68,7 @@ def train(
     train_loader: DataLoader[Any],
     epoch: int,
     device: torch.device,
-) -> float:
+) -> FoldMetrics:
     """
     Train a model for a specified number of epochs.
 
@@ -32,35 +81,37 @@ def train(
     * device: Device to run training on (e.g., 'cuda', 'cpu').
 
     # Returns
-    Training accuracy as a float.
+    FoldMetrics computed on the last epoch's predictions.
     """
     model.train()
-    total_correct: int = 0
-    total_samples: int = 0
-    
+    all_labels: list[int] = []
+    all_preds: list[int] = []
+
     for _ in range(epoch):
+        all_labels = []
+        all_preds = []
         for inputs, labels in train_loader:
             inputs = inputs.to(device)
             labels = labels.to(device)
-            
+
             optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
-            
+
             _, predicted = torch.max(outputs.data, 1)
-            total_samples += labels.size(0)
-            total_correct += (predicted == labels).sum().item()
-    
-    return total_correct / total_samples
+            all_labels.extend(labels.cpu().tolist())
+            all_preds.extend(predicted.cpu().tolist())
+
+    return _compute_metrics(all_labels, all_preds)
 
 
 def validate(
     model: nn.Module,
     val_loader: DataLoader[Any],
     device: torch.device,
-) -> float:
+) -> FoldMetrics:
     """
     Evaluate a model on validation data.
 
@@ -70,112 +121,20 @@ def validate(
     * device: Device to run evaluation on (e.g., 'cuda', 'cpu').
 
     # Returns
-    Validation accuracy as a float.
+    FoldMetrics for the validation set.
     """
     model.eval()
-    total_correct: int = 0
-    total_samples: int = 0
-    
+    all_labels: list[int] = []
+    all_preds: list[int] = []
+
     with torch.no_grad():
         for inputs, labels in val_loader:
             inputs = inputs.to(device)
             labels = labels.to(device)
-            
+
             outputs = model(inputs)
             _, predicted = torch.max(outputs.data, 1)
-            total_samples += labels.size(0)
-            total_correct += (predicted == labels).sum().item()
-    
-    return total_correct / total_samples
+            all_labels.extend(labels.cpu().tolist())
+            all_preds.extend(predicted.cpu().tolist())
 
-
-def crossvalid(
-    model_class: Type[nn.Module],
-    vocab_size: int,
-    hidden_dim: int,
-    n_hiddens: int,
-    epochs: int,
-    criterion: nn.Module,
-    optimizer_class: Any,
-    lr: float,
-    dataset: Dataset[Any],
-    k_fold: int,
-    device: torch.device,
-    batch_size: int,
-    dropout: float,
-    weight_decay: float,
-) -> tuple[Series[float], Series[float]]:
-    """
-    Perform stratified k-fold cross-validation on a dataset.
-
-    # Parameters
-    We will split the parameters into three types:
-        1. Constants: are parameters that are fixed
-        2. Variant Hyperparameters: are hyperparameters that can be
-            changed (in the context of a Grid Search).
-        3. Constant Hyperparameters: are hyperparameters that are
-            fixed (in the context of a Grid Search).
-
-    ## Constants
-    * model_class: Should ALWAYS be MyLittlePony.
-    * k_fold: Number of folds.
-    * device: Device to run on (e.g., 'cuda', 'cpu').
-    * vocab_size: Vocabulary size for the model.
-    * dataset: Dataset with `.y` attribute for labels.
-
-    ## Variant Hyperparameters
-    * hidden_dim: Hidden layer dimension.
-    * n_hiddens: Number of hidden layers.
-    * epochs: Number of training epochs per fold.
-    * batch_size: Batch size for DataLoaders.
-    * dropout: Dropout rate (passed to model_class).
-
-    ## Constant Hyperparameters
-    * optimizer_class: Optimizer class to instantiate.
-    * criterion: Loss function.
-    * lr: Learning rate.
-    * weight_decay: L2 regularization strength for the optimizer.
-
-    # Returns
-    Tuple of (train_score, val_score) as pandas Series.
-
-    # Reference
-    https://stackoverflow.com/a/64386444
-    Posted by Skipper, modified by community. See post 'Timeline' for change history
-    Retrieved 2026-02-03, License - CC BY-SA 4.0
-    """
-    train_score: Series[float] = pd.Series(dtype=float)
-    val_score: Series[float] = pd.Series(dtype=float)
-
-    # stratified k fold
-    labels: ndarray[Any, Any] = dataset.y  # type: ignore[attr-defined]
-    stratified_folds = StratifiedKFold(n_splits=k_fold, shuffle=True, random_state=5)
-
-    allocate: ndarray[Any, Any] = np.zeros(len(labels))
-    fold_indices = list(stratified_folds.split(allocate, labels))
-
-    for i in tqdm(range(k_fold), desc="K-Fold CV"):
-        model = model_class(vocab_size, hidden_dim, n_hiddens, dropout).to(device)
-        optimizer = optimizer_class(model.parameters(), lr=lr, weight_decay=weight_decay)
-
-        train_indices, val_indices = fold_indices[i]
-
-        train_set = torch.utils.data.Subset(dataset, train_indices)
-        val_set = torch.utils.data.Subset(dataset, val_indices)
-
-        train_loader = torch.utils.data.DataLoader(
-            train_set, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True
-        )
-        val_loader = torch.utils.data.DataLoader(
-            val_set, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True
-        )
-        
-        train_acc = train(model, criterion, optimizer, train_loader, epochs, device)
-        train_score.at[i] = train_acc
-        val_acc = validate(model, val_loader, device)
-        val_score.at[i] = val_acc
-
-        fold_labels = labels[val_indices]
-        distribution = np.bincount(fold_labels) / len(fold_labels)
-    
-    return train_score, val_score
+    return _compute_metrics(all_labels, all_preds)
