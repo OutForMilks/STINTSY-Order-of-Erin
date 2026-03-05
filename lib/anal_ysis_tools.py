@@ -358,7 +358,6 @@ def incorrect_confidence_score(model, X, y_true, y_pred):
     counts, bins, patches = plt.hist(incorrect_confidence, bins=50, alpha=0.7, edgecolor="black")
     max_y = int(max(counts))
     plt.yticks(np.arange(0, max_y + 100, 50))
-    plt.xticks(np.arange(0, 1.05, 0.05), rotation=45)
     plt.xlabel("Confidence Score")
     plt.ylabel("Number of Samples")
     plt.title("Distribution of Incorrect Predictions and Level of confidence")
@@ -367,4 +366,4 @@ def incorrect_confidence_score(model, X, y_true, y_pred):
 
     print(f"Total incorrect predictions: {incorrect_mask.sum()}/{len(y_pred)}")
     print(f"Mean (incorrect) confidence score: {(incorrect_confidence).mean():.4f}")
-    print(f"Median (incorrect) confidence score: {(incorrect_confidence).median():.4f}")
+    print(f"Median (incorrect) confidence score: {np.median(incorrect_confidence):.4f}")
