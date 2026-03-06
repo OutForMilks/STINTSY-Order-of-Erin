@@ -21,6 +21,7 @@ dependencies = [
     "imbalanced-learn<=0.41.1",
     "scipy>=1.17.0",
     "optuna>=4.7.0",
+    "hypopt>=0.1.0",
 ]
 
 [dependency-groups]
