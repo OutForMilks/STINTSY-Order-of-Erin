@@ -19,22 +19,17 @@
 
 ## Machine Learning Models
 
-We will use two classical supervised learning algorithms: **Naive Baye** and 🏗️. Then, one neural network approach: 🏗️.
-
-> @Stephen: add the classical supervised learning algorithm and neural network approach here.
-> When you add the algorithm update: 
-> - the ## Notebooks section in this file
-> - the filename of `notebooks/svm.ipynb`
+We use two classical supervised learning algorithms: **Multinomial Naive Bayes (MNB)** and **Multinomial Logistic Regression (MLR)**. Then, one neural network approach: **Multilayer Perceptron (MLP)**.
 
 ## Notebooks
 
-View the notebooks in the `notebooks/` directory. The notebooks are enumarated below, also view the notebooks in this order indicated.
+View the notebooks in the `notebooks/` directory. The notebooks are enumerated below, also view the notebooks in this order indicated.
 
 1. `data.ipynb`: contains data description, data cleaning, exploratory data analysis, and preprocessing.
-1. `bayes.ipynb`: contains model training, error analysis, and finetuning for Naive Bayes.
-1. `svm.ipynb`: contains model training, error analysis, and finetuning for SVM.
-1. `nn.ipynb`: contains model training, error analysis, and finetuning for the Neural Network approach.
-1. `eval.ipynb`: contains the model evaluation and conclusion of the project.
+2. `bayes.ipynb`: contains model training, error analysis, and finetuning for Multinomial Naive Bayes.
+3. `multi_log_reg.ipynb`: contains model training, error analysis, and finetuning for Multinomial Logistic Regression.
+4. `nn.ipynb`: contains model training, error analysis, and finetuning for the Multilayer Perceptron neural network approach.
+5. `eval.ipynb`: contains the model evaluation and conclusion of the project.
 
 ## Data
 
